@@ -1,0 +1,6 @@
+vars/*.env
+nginx/logs/*.log
+mysql/data
+!mysql/data/.gitignore
+elasticsearch/data
+!elasticsearch/data/.gitignore

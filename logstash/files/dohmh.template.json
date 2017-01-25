@@ -1,0 +1,127 @@
+{
+    "order": 0,
+    "template": "dohmh",
+    "settings": {
+        "index": {
+            "number_of_shards": "1",
+            "number_of_replicas": "0",
+            "refresh_interval": "30s"
+        },
+        "analysis": {
+            "filter": {
+                "autocomplete_filter": {
+                    "type": "edge_ngram",
+                    "min_gram": 1,
+                    "max_gram": 20
+                }
+            },
+            "analyzer": {
+                "autocomplete": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "filter": [
+                        "lowercase",
+                        "autocomplete_filter"
+                    ]
+                }
+            }
+        }
+    },
+    "mappings": {
+        "log": {
+            "properties": {
+                "dba": {
+                    "type": "text",
+                    "analyzer": "autocomplete",
+					"search_analyzer": "standard",
+                    "fields": {
+                        "raw": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "score": {
+                    "type": "long"
+                },
+                "record-date": {
+                    "format": "date_optional_time||epoch_second",
+                    "type": "date"
+                },
+                "violation-code": {
+                    "type": "keyword"
+                },
+                "zipcode": {
+                    "type": "keyword"
+                },
+                "phone": {
+                    "type": "keyword"
+                },
+                "grade-date": {
+                    "format": "date_optional_time||epoch_second",
+                    "type": "date"
+                },
+                "inspection-date": {
+                    "format": "date_optional_time||epoch_second",
+                    "type": "date"
+                },
+                "street": {
+                    "type": "keyword"
+                },
+                "message": {
+                    "type": "keyword"
+                },
+                "critical-flag": {
+                    "type": "keyword"
+                },
+                "path": {
+                    "type": "keyword"
+                },
+                "@timestamp": {
+                    "format": "date_optional_time||epoch_second",
+                    "type": "date"
+                },
+                "building": {
+                    "type": "keyword"
+                },
+                "action": {
+                    "type": "text"
+                },
+                "boro": {
+                    "type": "keyword"
+                },
+                "cuisine-description": {
+                    "type": "text",
+                    "analyzer": "autocomplete",
+					"search_analyzer": "standard",
+                    "fields": {
+                        "raw": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "camis": {
+                    "type": "keyword"
+                },
+                "violation-description": {
+                    "type": "text"
+                },
+                "@version": {
+                    "type": "keyword"
+                },
+                "host": {
+                    "type": "text"
+                },
+                "grade": {
+                    "type": "keyword"
+                },
+                "inspection-type": {
+                    "type": "keyword"
+                },
+                "location": {
+                    "type": "geo_point"
+                }
+            }
+        }
+    },
+    "aliases": {}
+}

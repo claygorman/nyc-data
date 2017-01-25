@@ -1,0 +1,83 @@
+version: '2'
+services:
+  web:
+    container_name: nginx.local
+    image: nginx:1.10.2
+    ports:
+      - "9090:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/backends.conf:/etc/nginx/backends.conf
+      - ./nginx/site.template:/etc/nginx/conf.d/site.template
+      - ./nginx/site.template.partial:/etc/nginx/conf.d/site.template.partial
+      - ./nginx/logs:/var/log/nginx
+      - ./www:/usr/share/nginx
+    networks:
+      - primary
+    links:
+      - php:php.local
+      - mysql:mysql.local
+    env_file:
+      - ./vars/web-variables.env
+    command: /bin/bash -c "envsubst < /etc/nginx/conf.d/site.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+  php:
+    container_name: php.local
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    image: php:laravel
+    volumes:
+      - ./www:/usr/share/nginx
+      - ./php/logs:/user/share/nginx/storage/logs
+    links:
+      - redis:redis.local
+      - mysql:mysql.local
+      - elasticsearch:elasticsearch.local
+    networks:
+      - primary
+    env_file: 
+      - ./vars/php-variables.env
+  redis:
+    container_name: redis.local 
+    image: redis:alpine
+    networks:
+      - primary
+  mysql:
+    container_name: mysql.local
+    image: mysql:5.7
+    volumes:
+      - ./mysql/my.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./mysql/data:/var/lib/mysql # persist the data
+    networks:
+      - primary
+    env_file:
+      - ./vars/mysql-variables.env
+  elasticsearch:
+    container_name: elasticsearch.local
+    image: elasticsearch:5.1.2
+    links:
+      - logstash:logstash.local
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data # persist the data
+      - ./elasticsearch/config:/usr/share/elasticsearch/config
+    networks:
+      - primary
+    env_file:
+      - ./vars/elasticsearch-variables.env
+  logstash:
+    container_name: logstash.local
+    build:
+      context: ./logstash
+      dockerfile: Dockerfile
+    image: logtash:custom
+    volumes:
+      - ./logstash/config:/config-dir
+      - ./logstash/files:/files
+    networks:
+      - primary
+    env_file:
+      - ./vars/logstash-variables.env
+    command: ["tail", "-f", "/dev/null"]
+networks:
+  primary:
+    driver: bridge

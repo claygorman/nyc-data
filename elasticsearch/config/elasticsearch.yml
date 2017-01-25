@@ -1,0 +1,2 @@
+cluster.routing.allocation.disk.watermark.high: ${HIGH_WATERMARK}
+network.host: ["_local_","_site_"]
