@@ -20,7 +20,7 @@ echo "#### END is-docker-compose-running ####"
 echo ""
 
 echo "#### BEGIN bootstrap-elasticsearch.sh ####"
-#./scripts/bootstrap-elasticsearch.sh
+./scripts/bootstrap-elasticsearch.sh
 echo "#### END bootstrap-elasticsearch.sh ####"
 
 echo ""
@@ -32,7 +32,7 @@ echo "#### END laravel-preflight.sh ####"
 echo ""
 
 echo "#### BEGIN updating laravel app ####"
-#docker exec -it php.local bash -c "cd /usr/share/nginx && chmod a+x composer.phar && /usr/local/bin/php composer.phar update"
+./scripts/update-laravel.sh
 echo "#### END updating laravel app ####"
 
 echo ""

@@ -28,7 +28,8 @@
                         </thead>
                         <?php $i = 1; ?>
                         <tbody>
-                            @foreach($thaiFood as $place)
+                        @if(!empty($thaiFood))
+                          @foreach($thaiFood as $place)
                             <tr>
                                 <td scope="row">{{ $i }}</td>
                                 <td><a href="{{ route('show-restaurant-data', $place['dba']) }}">{{ $place['dba'] }}</a></td>
@@ -39,7 +40,9 @@
                                 <td>{{ $place['score'] }}</td>
                                 <td>{{ $place['inspection-date'] }}</td>
                             </tr>
-                            <?php ++$i; ?> @endforeach
+                            <?php ++$i; ?>
+                          @endforeach
+                        @endif
                         </tbody>
                     </table>
                 </div>

@@ -27,6 +27,7 @@
                         </thead>
                         <?php $i = 1; ?>
                         <tbody>
+                         @if(!empty($restaurantData))
                             @foreach($restaurantData as $place)
                             <tr>
                                 <td scope="row">{{ $i }}</td>
@@ -36,7 +37,9 @@
                                 <td>{{ $place['violation-code'] }}</td>
                                 <td style="max-width: 500px">{{ $place['violation-description'] }}</td>
                             </tr>
-                            <?php ++$i; ?> @endforeach
+                            <?php ++$i; ?>
+                            @endforeach
+                         @endif
                         </tbody>
                     </table>
                 </div>

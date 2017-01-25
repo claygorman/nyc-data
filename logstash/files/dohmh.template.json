@@ -33,7 +33,7 @@
                 "dba": {
                     "type": "text",
                     "analyzer": "autocomplete",
-					"search_analyzer": "standard",
+                    "search_analyzer": "standard",
                     "fields": {
                         "raw": {
                             "type": "keyword"
@@ -92,7 +92,7 @@
                 "cuisine-description": {
                     "type": "text",
                     "analyzer": "autocomplete",
-					"search_analyzer": "standard",
+                    "search_analyzer": "standard",
                     "fields": {
                         "raw": {
                             "type": "keyword"

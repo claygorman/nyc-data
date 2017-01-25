@@ -6,7 +6,7 @@
 #   CRITICAL - container is stopped
 #   UNKNOWN - does not exist
 
-containers=( "elasticsearch.local" "php.local" "logstash.local" "nginx.local" "mysql.local" "redis.local" )
+containers=( "elasticsearch.local" "php.local" "logstash.local" "nginx.local" "redis.local" )
 for i in "${containers[@]}"
 do
 	CONTAINER=$i

@@ -1,10 +1,10 @@
 server {
-	listen					80 default_server;
-	server_name 			${NGINX_HOST};
+    listen                  80 default_server;
+    server_name             ${NGINX_HOST};
 
-    keepalive_timeout		70; 
-    client_max_body_size 	100M;
-    root 					/usr/share/nginx/public;
+    keepalive_timeout       70; 
+    client_max_body_size    100M;
+    root                    /usr/share/nginx/public;
 
     include /etc/nginx/conf.d/site.template.partial;
 }

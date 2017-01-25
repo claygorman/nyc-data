@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Elasticsearch\ClientBuilder;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class RestaurantController extends Controller
 {
+    /**
+     * Set the elasticsearch client connection.
+     *
+     * @var ClientBuilder
+     */
     protected $client;
 
     public function __construct()
@@ -15,13 +20,14 @@ class RestaurantController extends Controller
         $this->client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_SERVER')])->build();
     }
 
-    public function thaifood(Request $request)
+    /**
+     * This loads the view for the top 10 thai restaurants.
+     *
+     * @return Response
+     */
+    public function thaifood()
     {
         try {
-            // $aggs = $this->thaiFoodQuery();
-
-            // $data = $this->client->search($aggs);
-
             $thaiFood = $this->thaiFoodViewData();
         } catch (\Exception $e) {
             $data = ['error' => $e->getMessage()];
@@ -32,11 +38,21 @@ class RestaurantController extends Controller
         return view('restaurant.index', ['thaiFood' => $thaiFood]);
     }
 
+    /**
+     * API response for the map data for thai food.
+     *
+     * @return ResponseJson
+     */
     public function thaiFoodMap()
     {
         return response()->json($this->thaiFoodMapData());
     }
 
+    /**
+     * This loads the view for the best places in NY.
+     *
+     * @return Response
+     */
     public function bestplaces()
     {
         try {
@@ -50,30 +66,42 @@ class RestaurantController extends Controller
         return view('restaurant.bestplaces', ['restaurants' => $restaurants]);
     }
 
+    /**
+     * API response for the map data for best placs.
+     *
+     * @return Response
+     */
     public function bestPlacesMap()
     {
         return response()->json($this->bestPlacesMapData());
     }
 
+    /**
+     * This shows more in depth data about a restaurant.
+     *
+     * @param string $restaurant This is the name of the restaurant
+     *
+     * @return Response
+     */
     public function show($restaurant)
     {
         $aggs = [
-                'index' => 'dohmh',
-                'type' => 'log',
-                'size' => 50,
-                'body' => [
-                    'sort' => [
-                        ['inspection-date' => ['order' => 'desc']],
-                    ],
-                    'query' => [
-                        'bool' => [
-                            'filter' => [
-                                ['match' => ['dba' => $restaurant]],
-                            ],
+            'index' => 'dohmh',
+            'type' => 'log',
+            'size' => 50,
+            'body' => [
+                'sort' => [
+                    ['inspection-date' => ['order' => 'desc']],
+                ],
+                'query' => [
+                    'bool' => [
+                        'filter' => [
+                            ['match' => ['dba' => $restaurant]],
                         ],
                     ],
                 ],
-            ];
+            ],
+        ];
 
         $data = $this->client->search($aggs);
 
@@ -101,52 +129,78 @@ class RestaurantController extends Controller
         return view('restaurant.data', ['restaurantData' => $restaurantData, 'restaurant' => $restaurant, 'chartData' => $chartData, 'chartTitle' => $chartTitle]);
     }
 
-    private function formatDate($date)
+    /**
+     * Formats the date to our spec.
+     *
+     * @param string $date
+     *
+     * @return string
+     */
+    private function formatDate(string $date)
     {
-        return (new Carbon($date))->toDateString();
+        return (string) (new Carbon($date))->toDateString();
     }
 
-    private function formatStreet($street)
+    /**
+     * Formats the steet name to our spec.
+     *
+     * @param string $street
+     *
+     * @return string
+     */
+    private function formatStreet(string $street)
     {
-        return title_case($street);
+        return (string) title_case($street);
     }
 
-    private function formatDba($dba)
+    /**
+     * Formats the business name to our spec.
+     *
+     * @param string $dba
+     *
+     * @return string
+     */
+    private function formatDba(string $dba)
     {
-        return title_case($dba);
+        return (string) title_case($dba);
     }
 
+    /**
+     * This is the query builder for the best places.
+     *
+     * @return array
+     */
     private function bestPlacesQuery()
     {
         $aggs = [
-                'index' => 'dohmh',
-                'type' => 'log',
-                'size' => 0,
-                'body' => [
-                    'aggs' => [
-                        'filter_docs' => [
-                            'filter' => [
-                                'bool' => [
-                                    'must' => [
-                                        ['terms' => ['grade' => ['A', 'B']]],
-                                    ],
+            'index' => 'dohmh',
+            'type' => 'log',
+            'size' => 0,
+            'request_cache' => 1,
+            'body' => [
+                'aggs' => [
+                    'filter_docs' => [
+                        'filter' => [
+                            'bool' => [
+                                'must' => [
+                                    ['terms' => ['grade' => ['A', 'B']]],
                                 ],
                             ],
-                            'aggs' => [
-                                'dba' => [
-                                    'terms' => [
-                                        'field' => 'phone',
-                                        'size' => 50,
-                                        'min_doc_count' => 10,
-                                        'order' => ['_count' => 'desc'],
-                                    ],
-                                    'aggs' => [
-                                       'top_tag_hits' => [
-                                           'top_hits' => [
-                                               'sort' => [['inspection-date' => ['order' => 'desc']]],
-                                                '_source' => ['includes' => ['*']],
-                                                'size' => 1,
-                                            ],
+                        ],
+                        'aggs' => [
+                            'dba' => [
+                                'terms' => [
+                                    'field' => 'phone',
+                                    'size' => 50,
+                                    'min_doc_count' => 10,
+                                    'order' => ['_count' => 'desc'],
+                                ],
+                                'aggs' => [
+                                   'top_tag_hits' => [
+                                       'top_hits' => [
+                                           'sort' => [['inspection-date' => ['order' => 'desc']]],
+                                            '_source' => ['includes' => ['*']],
+                                            'size' => 1,
                                         ],
                                     ],
                                 ],
@@ -154,17 +208,24 @@ class RestaurantController extends Controller
                         ],
                     ],
                 ],
-            ];
+            ],
+        ];
 
-        return $aggs;
+        return (array) $aggs;
     }
 
+    /**
+     * This is the query builder for the best thai food places.
+     *
+     * @return array
+     */
     private function thaiFoodQuery()
     {
         $aggs = [
             'index' => 'dohmh',
             'type' => 'log',
             'size' => 0,
+            'request_cache' => 1,
             'body' => [
                 'aggs' => [
                     'filter_docs' => [
@@ -172,7 +233,7 @@ class RestaurantController extends Controller
                             'bool' => [
                                 'must' => [
                                     ['term' => ['cuisine-description' => 'thai']],
-                                    ['term' => ['grade' => 'A']],
+                                    ['terms' => ['grade' => ['A', 'B']]],
                                 ],
                             ],
                         ],
@@ -200,14 +261,27 @@ class RestaurantController extends Controller
             ],
         ];
 
-        return $aggs;
+        return (array) $aggs;
     }
 
+    /**
+     * This will return the thai food map data.
+     *
+     * @return array
+     */
     private function thaiFoodMapData()
     {
+        $mapMarkers = [];
+        $mapInfoWindow = [];
+
         $aggs = $this->thaiFoodQuery();
 
-        $data = $this->client->search($aggs);
+        if (Cache::has('thaifood_map_data')) {
+            $data = Cache::get('thaifood_map_data');
+        } else {
+            $data = $this->client->search($aggs);
+            Cache::forever('thaifood_map_data', $data);
+        }
 
         foreach ($data['aggregations']['filter_docs']['dba']['buckets'] as $bucket) {
             foreach ($bucket['top_tag_hits']['hits']['hits'] as $hit) {
@@ -222,34 +296,59 @@ class RestaurantController extends Controller
         return ['markers' => $mapMarkers, 'infoWindow' => $mapInfoWindow];
     }
 
+    /**
+     * This is the data builder for the view.
+     *
+     * @return array
+     */
     private function thaiFoodViewData()
     {
         $aggs = $this->thaiFoodQuery();
 
-        $data = $this->client->search($aggs);
+        if (Cache::has('thaifood_data')) {
+            $data = Cache::get('thaifood_data');
+        } else {
+            $data = $this->client->search($aggs);
+            Cache::forever('thaifood_data', $data);
+        }
 
         foreach ($data['aggregations']['filter_docs']['dba']['buckets'] as $bucket) {
             $thaiFood[$bucket['key']] = ['inspections' => $bucket['doc_count'], 'dba' => $this->formatDba($bucket['key'])];
             foreach ($bucket['top_tag_hits']['hits']['hits'] as $hit) {
-                $thaiFood[$hit['_source']['dba']]['boro'] = $hit['_source']['boro'];
-                $thaiFood[$hit['_source']['dba']]['score'] = $hit['_source']['score'];
-                $thaiFood[$hit['_source']['dba']]['grade'] = $hit['_source']['grade'];
-                $thaiFood[$hit['_source']['dba']]['action'] = $hit['_source']['action'];
-                $thaiFood[$hit['_source']['dba']]['violation-code'] = $hit['_source']['violation-code'];
-                $thaiFood[$hit['_source']['dba']]['inspection-date'] = $this->formatDate($hit['_source']['inspection-date']);
-                $thaiFood[$hit['_source']['dba']]['street'] = $this->formatStreet($hit['_source']['street']);
-                $thaiFood[$hit['_source']['dba']]['zip'] = $hit['_source']['zipcode'];
+                $thaiFood[$hit['_source']['dba']] += [
+                    'boro' => $hit['_source']['boro'],
+                    'score' => $hit['_source']['score'],
+                    'grade' => $hit['_source']['grade'],
+                    'action' => $hit['_source']['action'],
+                    'violation-code' => $hit['_source']['violation-code'],
+                    'inspection-date' => $this->formatDate($hit['_source']['inspection-date']),
+                    'street' => $this->formatStreet($hit['_source']['street']),
+                    'zip' => $hit['_source']['zipcode'],
+                ];
             }
         }
 
-        return $thaiFood;
+        return (array) $thaiFood;
     }
 
+    /**
+     * This is the api response map data.
+     *
+     * @return array
+     */
     private function bestPlacesMapData()
     {
+        $mapMarkers = [];
+        $mapInfoWindow = [];
+
         $aggs = $this->bestPlacesQuery();
 
-        $data = $this->client->search($aggs);
+        if (Cache::has('best_places_map_data')) {
+            $data = Cache::get('best_places_map_data');
+        } else {
+            $data = $this->client->search($aggs);
+            Cache::forever('best_places_map_data', $data);
+        }
 
         foreach ($data['aggregations']['filter_docs']['dba']['buckets'] as $bucket) {
             foreach ($bucket['top_tag_hits']['hits']['hits'] as $hit) {
@@ -264,28 +363,40 @@ class RestaurantController extends Controller
         return ['markers' => $mapMarkers, 'infoWindow' => $mapInfoWindow];
     }
 
+    /**
+     * This is the best places map view data.
+     *
+     * @return array
+     */
     private function bestPlacesViewData()
     {
         $aggs = $this->bestPlacesQuery();
 
-        $data = $this->client->search($aggs);
+        if (Cache::has('best_places_view_data')) {
+            $data = Cache::get('best_places_view_data');
+        } else {
+            $data = $this->client->search($aggs);
+            Cache::forever('best_places_view_data', $data);
+        }
 
         foreach ($data['aggregations']['filter_docs']['dba']['buckets'] as $bucket) {
             $restaurants[$bucket['key']] = ['inspections' => $bucket['doc_count']];
             foreach ($bucket['top_tag_hits']['hits']['hits'] as $hit) {
                 $hit['_source']['dba'] = $this->formatDba($hit['_source']['dba']);
-                $restaurants[$hit['_source']['phone']]['dba'] = $hit['_source']['dba'];
-                $restaurants[$hit['_source']['phone']]['boro'] = $hit['_source']['boro'];
-                $restaurants[$hit['_source']['phone']]['score'] = $hit['_source']['score'];
-                $restaurants[$hit['_source']['phone']]['grade'] = $hit['_source']['grade'];
-                $restaurants[$hit['_source']['phone']]['action'] = $hit['_source']['action'];
-                $restaurants[$hit['_source']['phone']]['violation-code'] = isset($hit['_source']['violation-code']) ? $hit['_source']['violation-code'] : '';
-                $restaurants[$hit['_source']['phone']]['inspection-date'] = $this->formatDate($hit['_source']['inspection-date']);
-                $restaurants[$hit['_source']['phone']]['street'] = $this->formatStreet($hit['_source']['street']);
-                $restaurants[$hit['_source']['phone']]['zip'] = $hit['_source']['zipcode'];
+                $restaurants[$hit['_source']['phone']] += [
+                    'dba' => $hit['_source']['dba'],
+                    'boro' => $hit['_source']['boro'],
+                    'score' => $hit['_source']['score'],
+                    'grade' => $hit['_source']['grade'],
+                    'action' => $hit['_source']['action'],
+                    'violation-code' => isset($hit['_source']['violation-code']) ? $hit['_source']['violation-code'] : '',
+                    'inspection-date' => $this->formatDate($hit['_source']['inspection-date']),
+                    'street' => $this->formatStreet($hit['_source']['street']),
+                    'zip' => $hit['_source']['zipcode'],
+                ];
             }
         }
 
-        return $restaurants;
+        return (array) $restaurants;
     }
 }
