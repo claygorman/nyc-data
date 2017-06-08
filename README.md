@@ -16,7 +16,7 @@ More inspections means more high ratings.
 * logstash [(logstash:5)](https://hub.docker.com/_/logstash/)
 * elasticsearch [(elasticsearch:5.1.2)](https://hub.docker.com/_/elasticsearch/)
 * redis [(redis:alpine)](https://hub.docker.com/_/redis/)
-* nginx [(nginx:1.10.2)](https://hub.docker.com/_/redis/)
+* nginx [(nginx:1.10.2)](https://hub.docker.com/_/nginx/)
 * php (extended locally php/Dockerfile) [(php:7.1-fpm)](https://hub.docker.com/_/php/)
 
 ## Installation
